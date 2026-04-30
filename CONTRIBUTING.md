@@ -164,12 +164,7 @@ This project uses [changesets](https://github.com/changesets/changesets) for ver
 
 2. **Version Update**
    ```bash
-   bun run version       # Apply changesets and update package.json
-   ```
-
-   **IMPORTANT**: After this command, manually update the version in `src/constants.ts` to match `package.json`:
-   ```typescript
-   export const VERSION = "X.Y.Z";  // <-- Update to match package.json
+   bun run version       # Apply changesets, update package.json, and auto-sync src/constants.ts
    ```
 
 3. **Pre-Release Validation**
@@ -208,11 +203,7 @@ This project uses [changesets](https://github.com/changesets/changesets) for ver
 
 #### Version Synchronization
 
-**IMPORTANT**: When updating the version, you must update it in TWO places:
-1. `package.json` - The npm package version
-2. `src/constants.ts` - The `VERSION` constant
-
-This ensures the MCP server reports the correct version to clients during the handshake.
+`bun run version` automatically syncs `src/constants.ts` from `package.json` via `scripts/sync-version.ts`. No manual update needed.
 
 #### Troubleshooting Releases
 

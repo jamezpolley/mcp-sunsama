@@ -1,10 +1,45 @@
 # Sunsama MCP Server
 
+> **Fork**: This is [jamezpolley/mcp-sunsama](https://github.com/jamezpolley/mcp-sunsama), a personal fork of [robertn702/mcp-sunsama](https://github.com/robertn702/mcp-sunsama). See [Fork Additions](#fork-additions) below.
+
 A Model Context Protocol (MCP) server that provides comprehensive task management capabilities through the Sunsama API. This server enables AI assistants to access Sunsama tasks, create new tasks, mark tasks complete, and manage your productivity workflow.
 
 <a href="https://glama.ai/mcp/servers/@robertn702/mcp-sunsama">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@robertn702/mcp-sunsama/badge" />
 </a>
+
+## Fork Additions
+
+Changes in this fork versus upstream:
+
+### JSON Format Flag
+`get-tasks-by-day`, `get-tasks-backlog`, and `get-archived-tasks` accept an optional `format: "json"` parameter. Default is `"tsv"` (unchanged). Useful when you need structured data rather than tab-separated output.
+
+### Calendar Tools
+Three new tools for calendar event management:
+- `get-calendar-events` — query events for a date range; defaults to the internal Sunsama calendar (auto-resolved), or pass `calendarId` for a specific Google Calendar
+- `create-calendar-event` — create a calendar event in Sunsama
+- `update-calendar-event` — update an existing calendar event
+
+### MCP Resources
+Three resources accessible via `list_resources` / `read_resource`:
+- `sunsama://api/docs` — tool documentation
+- `sunsama://user/calendars` — all connected calendar accounts and their config
+- `sunsama://user/integrations` — connected integrations (GitHub, Slack, Todoist, Gmail, Toggl, etc.)
+
+### Windows / 1Password Setup
+`run.ps1` injects credentials from 1Password via `op run` and starts the compiled server. Register in `.mcp.json` as a stdio server:
+```json
+{
+  "sunsama-timing": {
+    "type": "stdio",
+    "command": "pwsh",
+    "args": ["-NoProfile", "-NonInteractive", "-File", "C:\\path\\to\\mcp-sunsama\\run.ps1"]
+  }
+}
+```
+
+---
 
 ## Features
 
@@ -154,6 +189,11 @@ After adding the server, restart Claude Code to connect to the Sunsama MCP serve
 - `complete-subtask` - Mark a subtask as complete with optional completion timestamp
 - `uncomplete-subtask` - Mark a subtask as incomplete
 
+### Calendar Operations
+- `get-calendar-events` - Get calendar events for a date range (defaults to internal Sunsama calendar)
+- `create-calendar-event` - Create a calendar event in Sunsama
+- `update-calendar-event` - Update an existing calendar event
+
 ### User & Stream Operations
 - `get-user` - Get current user information
 - `get-streams` - Get streams/channels for project organization
@@ -268,11 +308,13 @@ src/
 ├── tools/
 │   ├── shared.ts          # Common utilities and patterns
 │   ├── user-tools.ts      # User operations (get-user)
-│   ├── task-tools.ts      # Task operations (15 tools)
+│   ├── task-tools.ts      # Task operations (~20 tools)
+│   ├── bulk-task-tools.ts # Bulk task operations (5 tools)
 │   ├── stream-tools.ts    # Stream operations (get-streams)
+│   ├── calendar-tools.ts  # Calendar operations (3 tools) [fork addition]
 │   └── index.ts           # Export all tools
 ├── resources/
-│   └── index.ts           # API documentation resource
+│   └── index.ts           # MCP resources: api/docs, user/calendars, user/integrations [fork addition]
 ├── auth/                  # Authentication strategies
 │   ├── stdio.ts           # Stdio transport authentication
 │   ├── http.ts            # HTTP Basic Auth parsing
