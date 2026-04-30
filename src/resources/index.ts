@@ -22,6 +22,7 @@ query getGroupEdge($groupId: String!) {
 
 async function fetchGroupEdge(extra: unknown): Promise<any> {
   const client = await getClient(extra);
+  if (!(client as any).groupId) await client.getUser();
   const groupId = (client as any).groupId;
   const response = await (client as any).graphqlRequest({
     operationName: "getGroupEdge",

@@ -48,6 +48,7 @@ query getCalendarEvents($startDate: DateTime!, $endDate: DateTime!, $groupId: St
 `;
 
 async function resolveSunsamaCalendarId(client: any): Promise<string> {
+  if (!client.groupId) await client.getUser();
   const groupId = client.groupId;
   const response = await client.graphqlRequest({
     operationName: "getGroupEdge",
@@ -72,6 +73,7 @@ export const getCalendarEventsTool = withTransportClient({
     context: ToolContext,
   ) => {
     const client = context.client as any;
+    if (!client.groupId) await client.getUser();
     const groupId = client.groupId;
 
     const resolvedCalendarId = calendarId ?? await resolveSunsamaCalendarId(client);
