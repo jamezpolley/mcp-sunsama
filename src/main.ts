@@ -4,7 +4,7 @@ import { getTransportConfig } from "./config/transport.js";
 import { setupStdioTransport } from "./transports/stdio.js";
 import { setupHttpTransport } from "./transports/http.js";
 import { allTools } from "./tools/index.js";
-import { apiDocumentationResource } from "./resources/index.js";
+import { apiDocumentationResource, userCalendarsResource, userIntegrationsResource } from "./resources/index.js";
 import { VERSION, SERVER_NAME } from "./constants.js";
 
 // Async IIFE for top-level await and error handling
@@ -38,16 +38,18 @@ import { VERSION, SERVER_NAME } from "./constants.js";
   });
 
   // Register resources
-  server.registerResource(
-    apiDocumentationResource.name,
-    apiDocumentationResource.uri,
-    {
-      title: apiDocumentationResource.name,
-      description: apiDocumentationResource.description,
-      mimeType: apiDocumentationResource.mimeType,
-    },
-    apiDocumentationResource.load,
-  );
+  for (const resource of [apiDocumentationResource, userCalendarsResource, userIntegrationsResource]) {
+    server.registerResource(
+      resource.name,
+      resource.uri,
+      {
+        title: resource.name,
+        description: resource.description,
+        mimeType: resource.mimeType,
+      },
+      resource.load,
+    );
+  }
 
   // Transport selection
   const config = getTransportConfig();

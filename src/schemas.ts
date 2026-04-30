@@ -474,6 +474,23 @@ export const updateTaskBacklogBulkSchema = z.object({
  * Calendar Event Operation Schemas
  */
 
+// Get calendar events parameters
+export const getCalendarEventsSchema = z.object({
+  startDate: z.string().describe(
+    "Start of the date range as ISO string (e.g. '2026-04-30T00:00:00.000Z')",
+  ),
+  endDate: z.string().describe(
+    "End of the date range as ISO string (e.g. '2026-04-30T23:59:59.999Z')",
+  ),
+  calendarId: z.string().optional().describe(
+    "Calendar ID to query. Defaults to the internal Sunsama calendar " +
+    "(resolved automatically from the user's calendar list).",
+  ),
+  format: z.enum(["tsv", "json"]).optional().describe(
+    "Output format. 'tsv' (default) or 'json'.",
+  ),
+});
+
 // Create calendar event parameters
 export const createCalendarEventSchema = z.object({
   title: z.string().min(1, "Title is required").describe(
@@ -588,6 +605,7 @@ export type UncompleteSubtaskInput = z.infer<typeof uncompleteSubtaskSchema>;
 export type AddSubtaskInput = z.infer<typeof addSubtaskSchema>;
 
 export type ReorderTaskInput = z.infer<typeof reorderTaskSchema>;
+export type GetCalendarEventsInput = z.infer<typeof getCalendarEventsSchema>;
 export type CreateCalendarEventInput = z.infer<typeof createCalendarEventSchema>;
 export type UpdateCalendarEventInput = z.infer<typeof updateCalendarEventSchema>;
 

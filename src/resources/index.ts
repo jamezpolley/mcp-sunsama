@@ -1,3 +1,78 @@
+import { getClient } from "../utils/client-resolver.js";
+
+const GET_GROUP_EDGE_QUERY = `
+query getGroupEdge($groupId: String!) {
+  currentGroupEdge(groupId: $groupId) {
+    integrations {
+      github { login email name needsReauthentication __typename }
+      slack { teamName teamId botUserId needsReauthentication __typename }
+      todoist { id email needsReauthentication __typename }
+      gmail { userInfo { email name __typename } needsReauthentication __typename }
+      notion { workspaceName needsReauthentication __typename }
+      googleCalendar { accountId integrationEnabled needsReauthentication __typename }
+      calendar { items { name id accountId service accessRole color primary selected hidden streamId defaultForTasks defaultForEvents importEvents __typename } __typename }
+      toggl { email needsReauthentication __typename }
+      zoom { email __typename }
+      __typename
+    }
+    __typename
+  }
+}
+`;
+
+async function fetchGroupEdge(extra: unknown): Promise<any> {
+  const client = await getClient(extra);
+  const groupId = (client as any).groupId;
+  const response = await (client as any).graphqlRequest({
+    operationName: "getGroupEdge",
+    variables: { groupId },
+    query: GET_GROUP_EDGE_QUERY,
+  });
+  const edge = response?.data?.currentGroupEdge;
+  if (!edge) throw new Error("getGroupEdge returned no data");
+  return edge;
+}
+
+export const userCalendarsResource = {
+  name: "Sunsama User Calendars",
+  uri: "sunsama://user/calendars",
+  description:
+    "All calendar accounts connected to Sunsama, including the internal Sunsama calendar, " +
+    "Google Calendar accounts, and their configuration (selected, hidden, importEvents, streamId, etc.)",
+  mimeType: "application/json",
+  load: async (uri: URL, extra: unknown) => {
+    const edge = await fetchGroupEdge(extra);
+    const items = edge.integrations?.calendar?.items ?? [];
+    return {
+      contents: [{
+        uri: uri.href,
+        text: JSON.stringify(items, null, 2),
+      }],
+    };
+  },
+};
+
+export const userIntegrationsResource = {
+  name: "Sunsama User Integrations",
+  uri: "sunsama://user/integrations",
+  description:
+    "All third-party integrations connected to the user's Sunsama account " +
+    "(GitHub, Slack, Todoist, Gmail, Notion, Google Calendar, Toggl, Zoom, etc.) " +
+    "with connection status and key account details.",
+  mimeType: "application/json",
+  load: async (uri: URL, extra: unknown) => {
+    const edge = await fetchGroupEdge(extra);
+    // Return integrations without the verbose calendar.items (that has its own resource)
+    const { calendar: _calendar, ...integrations } = edge.integrations ?? {};
+    return {
+      contents: [{
+        uri: uri.href,
+        text: JSON.stringify(integrations, null, 2),
+      }],
+    };
+  },
+};
+
 export const apiDocumentationResource = {
   uri: "sunsama://api/docs",
   name: "Sunsama API Documentation",
