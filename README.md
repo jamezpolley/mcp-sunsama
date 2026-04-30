@@ -15,6 +15,9 @@ Changes in this fork versus upstream:
 ### JSON Format Flag
 `get-tasks-by-day`, `get-tasks-backlog`, and `get-archived-tasks` accept an optional `format: "json"` parameter. Default is `"tsv"` (unchanged). Useful when you need structured data rather than tab-separated output.
 
+### `includeActualTime` Flag
+The same three list tools accept an optional `includeActualTime: true` parameter (default `false`). The default trimmer strips `actualTime[]` and reduces subtasks to titles; this flag keeps parent timer entries and expands subtasks into objects carrying `title`, `completedDate`, `timeEstimate`, and `actualTime`. Lets the Sunsama→Kimai sync workflow read a full day's timing data in one call instead of N+1 `get-task-by-id` round trips. Best paired with `format: "json"` — under TSV the nested arrays get JSON-stringified into single columns.
+
 ### Calendar Tools
 Three new tools for calendar event management:
 - `get-calendar-events` — query events for a date range; defaults to the internal Sunsama calendar (auto-resolved), or pass `calendarId` for a specific Google Calendar

@@ -16,6 +16,17 @@ const formatSchema = z.enum(["tsv", "json"]).optional().describe(
   "Output format for array responses. 'tsv' (default) or 'json'",
 );
 
+// Shared opt-in flag to include actualTime data in trimmed task responses.
+// When true, parent task actualTime[] entries are included and subtasks are
+// expanded from titles-only to objects with title/completedDate/timeEstimate/actualTime.
+// Use 'json' format to keep the data structured — under TSV the arrays are
+// JSON-stringified into single columns.
+const includeActualTimeSchema = z.boolean().optional().describe(
+  "Include actualTime[] timer entries (parent + per-subtask) in the response. " +
+    "When true, subtasks are returned as objects with timing data instead of just titles. " +
+    "Recommended with format='json'. Defaults to false.",
+);
+
 // Get tasks by day parameters
 export const getTasksByDaySchema = z.object({
   day: z.string().regex(
@@ -29,11 +40,13 @@ export const getTasksByDaySchema = z.object({
     "Filter tasks by completion status. 'all' returns all tasks, 'incomplete' returns only incomplete tasks, 'completed' returns only completed tasks. Defaults to 'all'",
   ),
   format: formatSchema,
+  includeActualTime: includeActualTimeSchema,
 });
 
 // Get tasks backlog parameters (no parameters needed)
 export const getTasksBacklogSchema = z.object({
   format: formatSchema,
+  includeActualTime: includeActualTimeSchema,
 });
 
 // Get archived tasks parameters
@@ -45,6 +58,7 @@ export const getArchivedTasksSchema = z.object({
     "Maximum number of tasks to return (defaults to 100)",
   ),
   format: formatSchema,
+  includeActualTime: includeActualTimeSchema,
 });
 
 // Get task by ID parameters

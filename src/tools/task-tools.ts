@@ -44,7 +44,10 @@ import {
   reorderTaskSchema,
 } from "../schemas.js";
 import { filterTasksByCompletion } from "../utils/task-filters.js";
-import { trimTasksForResponse } from "../utils/task-trimmer.js";
+import {
+  trimTasksForResponse,
+  trimTasksWithTimingForResponse,
+} from "../utils/task-trimmer.js";
 import {
   formatJsonResponse,
   formatPaginatedTsvResponse,
@@ -60,9 +63,14 @@ export const getTasksBacklogTool = withTransportClient({
   name: "get-tasks-backlog",
   description: "Get tasks from the backlog",
   parameters: getTasksBacklogSchema,
-  execute: async ({ format }: GetTasksBacklogInput, context: ToolContext) => {
+  execute: async (
+    { format, includeActualTime }: GetTasksBacklogInput,
+    context: ToolContext,
+  ) => {
     const tasks = await context.client.getTasksBacklog();
-    const trimmedTasks = trimTasksForResponse(tasks);
+    const trimmedTasks = includeActualTime
+      ? trimTasksWithTimingForResponse(tasks)
+      : trimTasksForResponse(tasks);
 
     return formatTaskArrayResponse(trimmedTasks, format);
   },
@@ -74,7 +82,13 @@ export const getTasksByDayTool = withTransportClient({
     "Get tasks for a specific day with optional filtering by completion status",
   parameters: getTasksByDaySchema,
   execute: async (
-    { day, timezone, completionFilter = "all", format }: GetTasksByDayInput,
+    {
+      day,
+      timezone,
+      completionFilter = "all",
+      format,
+      includeActualTime,
+    }: GetTasksByDayInput,
     context: ToolContext,
   ) => {
     // If no timezone provided, get the user's default timezone
@@ -85,7 +99,9 @@ export const getTasksByDayTool = withTransportClient({
 
     const tasks = await context.client.getTasksByDay(day, resolvedTimezone);
     const filteredTasks = filterTasksByCompletion(tasks, completionFilter);
-    const trimmedTasks = trimTasksForResponse(filteredTasks);
+    const trimmedTasks = includeActualTime
+      ? trimTasksWithTimingForResponse(filteredTasks)
+      : trimTasksForResponse(filteredTasks);
 
     return formatTaskArrayResponse(trimmedTasks, format);
   },
@@ -96,7 +112,7 @@ export const getArchivedTasksTool = withTransportClient({
   description: "Get archived tasks with optional pagination",
   parameters: getArchivedTasksSchema,
   execute: async (
-    { offset = 0, limit = 100, format }: GetArchivedTasksInput,
+    { offset = 0, limit = 100, format, includeActualTime }: GetArchivedTasksInput,
     context: ToolContext,
   ) => {
     const requestedLimit = limit;
@@ -106,7 +122,9 @@ export const getArchivedTasksTool = withTransportClient({
 
     const hasMore = allTasks.length > requestedLimit;
     const tasks = hasMore ? allTasks.slice(0, requestedLimit) : allTasks;
-    const trimmedTasks = trimTasksForResponse(tasks);
+    const trimmedTasks = includeActualTime
+      ? trimTasksWithTimingForResponse(tasks)
+      : trimTasksForResponse(tasks);
 
     const paginationInfo = {
       offset,

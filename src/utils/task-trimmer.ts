@@ -1,4 +1,4 @@
-import type { Task, TaskIntegration } from "sunsama-api/types";
+import type { Task, TaskActualTime, TaskIntegration, TaskSubtask } from "sunsama-api/types";
 
 /**
  * Trimmed task type containing only essential properties for API responses.
@@ -32,6 +32,44 @@ export type TrimmedTask = Pick<Task,
 };
 
 /**
+ * Subtask shape used when actualTime data is requested. Carries enough
+ * information to reconcile per-subtask timer entries against the parent task.
+ */
+export type TimedSubtask = {
+  _id: string;
+  title: string;
+  completedDate?: string | null;
+  timeEstimate?: number | null;
+  actualTime?: TaskActualTime | null;
+};
+
+/**
+ * Trimmed task type that includes actualTime data for the parent and
+ * per-subtask timer entries. Used when the caller passes
+ * `includeActualTime: true` to a list tool.
+ */
+export type TrimmedTaskWithTiming = Omit<TrimmedTask, 'subtasks'> & {
+  /** Array of timer entries (manual + active timer) for the parent task. */
+  actualTime: TaskActualTime[];
+  /** Subtasks expanded with timing fields. */
+  subtasks: TimedSubtask[];
+};
+
+function buildIntegration(task: Task): TrimmedTask['integration'] {
+  if (!task.integration) return null;
+
+  // Extract minimal integration data: service type and URL if available
+  // Integration identifiers vary by service - some have URLs (websites), others have different properties
+  const integration: { service: TaskIntegration['service']; url?: string } = {
+    service: task.integration.service,
+  };
+  if (task.integration.identifier && "url" in task.integration.identifier) {
+    integration.url = task.integration.identifier.url;
+  }
+  return integration;
+}
+
+/**
  * Trims a task object to include only essential properties for API responses.
  *
  * Included properties:
@@ -55,16 +93,41 @@ export type TrimmedTask = Pick<Task,
  * @returns Trimmed task object with only essential properties
  */
 export function trimTaskForResponse(task: Task): TrimmedTask {
-  let integration: TrimmedTask['integration'] = null;
+  return {
+    _id: task._id,
+    assigneeId: task.assigneeId,
+    completeDate: task.completeDate,
+    completed: task.completed,
+    createdAt: task.createdAt,
+    dueDate: task.dueDate,
+    integration: buildIntegration(task),
+    lastModified: task.lastModified,
+    notes: task.notes,
+    objectiveId: task.objectiveId,
+    streamIds: task.streamIds,
+    subtasks: task.subtasks.map((st) => st.title),
+    text: task.text,
+    timeEstimate: task.timeEstimate,
+  };
+}
 
-  // Extract minimal integration data: service type and URL if available
-  // Integration identifiers vary by service - some have URLs (websites), others have different properties
-  if (task.integration) {
-    integration = { service: task.integration.service };
-    if (task.integration.identifier && "url" in task.integration.identifier) {
-      integration.url = task.integration.identifier.url;
-    }
-  }
+/**
+ * Variant of {@link trimTaskForResponse} that preserves actualTime data
+ * (parent timer entries and per-subtask timing). Subtasks are expanded
+ * from titles-only into objects so callers can match timer entries to
+ * the subtask they belong to.
+ *
+ * @param task - Full task object from Sunsama API
+ * @returns Trimmed task with parent actualTime[] and rich subtasks.
+ */
+export function trimTaskWithTimingForResponse(task: Task): TrimmedTaskWithTiming {
+  const subtasks: TimedSubtask[] = task.subtasks.map((st: TaskSubtask) => ({
+    _id: st._id,
+    title: st.title,
+    completedDate: st.completedDate ?? null,
+    timeEstimate: st.timeEstimate ?? null,
+    actualTime: st.actualTime ?? null,
+  }));
 
   return {
     _id: task._id,
@@ -73,14 +136,15 @@ export function trimTaskForResponse(task: Task): TrimmedTask {
     completed: task.completed,
     createdAt: task.createdAt,
     dueDate: task.dueDate,
-    integration: integration,
+    integration: buildIntegration(task),
     lastModified: task.lastModified,
     notes: task.notes,
     objectiveId: task.objectiveId,
     streamIds: task.streamIds,
-    subtasks: task.subtasks.map((st) => st.title),
     text: task.text,
-    timeEstimate: task.timeEstimate
+    timeEstimate: task.timeEstimate,
+    actualTime: task.actualTime ?? [],
+    subtasks,
   };
 }
 
@@ -92,4 +156,14 @@ export function trimTaskForResponse(task: Task): TrimmedTask {
  */
 export function trimTasksForResponse(tasks: Task[]): TrimmedTask[] {
   return tasks.map(trimTaskForResponse);
+}
+
+/**
+ * Trims an array of task objects, preserving parent + subtask actualTime.
+ *
+ * @param tasks - Array of full task objects from Sunsama API
+ * @returns Array of trimmed-with-timing task objects.
+ */
+export function trimTasksWithTimingForResponse(tasks: Task[]): TrimmedTaskWithTiming[] {
+  return tasks.map(trimTaskWithTimingForResponse);
 }

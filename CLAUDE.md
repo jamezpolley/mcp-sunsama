@@ -201,6 +201,8 @@ Full CRUD support across ~30 tools:
 
 Array-returning read tools (`get-tasks-by-day`, `get-tasks-backlog`, `get-archived-tasks`) accept an optional `format: "json"` parameter to switch from TSV to JSON output.
 
+They also accept `includeActualTime: true` (default `false`) which skips the timing trim — parent `actualTime[]` and per-subtask timing fields are returned inline so the Kimai-sync workflow doesn't need an N+1 `get-task-by-id` round trip. Best paired with `format: "json"` since TSV will JSON-stringify the nested arrays into single columns.
+
 ### MCP Resources
 Three resources registered (accessible via `list_resources` / `read_resource`):
 - `sunsama://api/docs` — Tool documentation
@@ -223,7 +225,7 @@ Three resources registered (accessible via `list_resources` / `read_resource`):
   isTimerEntry: boolean  // false = manual entry
 }
 ```
-The trimmer strips `actualTime` from list responses. To get it, use `get-task-by-id` (returns full untrimmed task). Subtasks also carry their own `actualTime[]`.
+By default the list trimmer strips `actualTime` to keep responses small. Pass `includeActualTime: true` to `get-tasks-by-day` / `get-tasks-backlog` / `get-archived-tasks` to keep parent + per-subtask timer data inline. Otherwise use `get-task-by-id` per task (returns the full untrimmed shape).
 
 **Timing data priority for Kimai sync**: `actualTime` → `timeboxEventIds` duration → `importedFrom` calendar event duration → `timeEstimate`
 
@@ -251,5 +253,4 @@ Optional:
 
 - [ ] Remove `test-group-edge.mts` from repo root (temp test file, should be in `dev/` or deleted)
 - [ ] Consider upstreaming JSON format flag and calendar tools to robertn702/mcp-sunsama
-- [ ] Add opt-in `includeActualTime` flag to list tools (currently requires N+1 `get-task-by-id` calls)
 - [ ] Periodically sync upstream changes: `git fetch upstream && git merge upstream/main`
