@@ -202,6 +202,37 @@ export function formatTsvResponse(data: unknown[]): McpResponse {
 }
 
 /**
+ * Formats array data as TSV or JSON depending on the format option.
+ * Default (undefined or "tsv") produces TSV output.
+ */
+export function formatTaskArrayResponse(
+  data: unknown[],
+  format?: "tsv" | "json",
+): McpResponse {
+  if (format === "json") return formatJsonResponse(data);
+  return formatTsvResponse(data);
+}
+
+/**
+ * Formats paginated array data as TSV or JSON depending on the format option.
+ * JSON wraps data in { pagination, tasks } envelope.
+ */
+export function formatTaskArrayPaginatedResponse(
+  data: unknown[],
+  pagination: {
+    offset: number;
+    limit: number;
+    count: number;
+    hasMore: boolean;
+    nextOffset: number | null;
+  },
+  format?: "tsv" | "json",
+): McpResponse {
+  if (format === "json") return formatJsonResponse({ pagination, tasks: data });
+  return formatPaginatedTsvResponse(data, pagination);
+}
+
+/**
  * Formats paginated array data as a TSV text response with a pagination metadata header.
  */
 export function formatPaginatedTsvResponse(

@@ -48,6 +48,8 @@ import { trimTasksForResponse } from "../utils/task-trimmer.js";
 import {
   formatJsonResponse,
   formatPaginatedTsvResponse,
+  formatTaskArrayPaginatedResponse,
+  formatTaskArrayResponse,
   formatTsvResponse,
   withTransportClient,
   type ToolContext,
@@ -58,11 +60,11 @@ export const getTasksBacklogTool = withTransportClient({
   name: "get-tasks-backlog",
   description: "Get tasks from the backlog",
   parameters: getTasksBacklogSchema,
-  execute: async (_args: GetTasksBacklogInput, context: ToolContext) => {
+  execute: async ({ format }: GetTasksBacklogInput, context: ToolContext) => {
     const tasks = await context.client.getTasksBacklog();
     const trimmedTasks = trimTasksForResponse(tasks);
 
-    return formatTsvResponse(trimmedTasks);
+    return formatTaskArrayResponse(trimmedTasks, format);
   },
 });
 
@@ -72,7 +74,7 @@ export const getTasksByDayTool = withTransportClient({
     "Get tasks for a specific day with optional filtering by completion status",
   parameters: getTasksByDaySchema,
   execute: async (
-    { day, timezone, completionFilter = "all" }: GetTasksByDayInput,
+    { day, timezone, completionFilter = "all", format }: GetTasksByDayInput,
     context: ToolContext,
   ) => {
     // If no timezone provided, get the user's default timezone
@@ -85,7 +87,7 @@ export const getTasksByDayTool = withTransportClient({
     const filteredTasks = filterTasksByCompletion(tasks, completionFilter);
     const trimmedTasks = trimTasksForResponse(filteredTasks);
 
-    return formatTsvResponse(trimmedTasks);
+    return formatTaskArrayResponse(trimmedTasks, format);
   },
 });
 
@@ -94,7 +96,7 @@ export const getArchivedTasksTool = withTransportClient({
   description: "Get archived tasks with optional pagination",
   parameters: getArchivedTasksSchema,
   execute: async (
-    { offset = 0, limit = 100 }: GetArchivedTasksInput,
+    { offset = 0, limit = 100, format }: GetArchivedTasksInput,
     context: ToolContext,
   ) => {
     const requestedLimit = limit;
@@ -114,7 +116,7 @@ export const getArchivedTasksTool = withTransportClient({
       nextOffset: hasMore ? offset + requestedLimit : null,
     };
 
-    return formatPaginatedTsvResponse(trimmedTasks, paginationInfo);
+    return formatTaskArrayPaginatedResponse(trimmedTasks, paginationInfo, format);
   },
 });
 

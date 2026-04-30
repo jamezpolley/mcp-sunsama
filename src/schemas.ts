@@ -11,6 +11,11 @@ export const completionFilterSchema = z.enum([
   "completed",
 ]);
 
+// Shared output format option for query tools that return task arrays
+const formatSchema = z.enum(["tsv", "json"]).optional().describe(
+  "Output format for array responses. 'tsv' (default) or 'json'",
+);
+
 // Get tasks by day parameters
 export const getTasksByDaySchema = z.object({
   day: z.string().regex(
@@ -23,10 +28,13 @@ export const getTasksByDaySchema = z.object({
   completionFilter: completionFilterSchema.optional().describe(
     "Filter tasks by completion status. 'all' returns all tasks, 'incomplete' returns only incomplete tasks, 'completed' returns only completed tasks. Defaults to 'all'",
   ),
+  format: formatSchema,
 });
 
 // Get tasks backlog parameters (no parameters needed)
-export const getTasksBacklogSchema = z.object({});
+export const getTasksBacklogSchema = z.object({
+  format: formatSchema,
+});
 
 // Get archived tasks parameters
 export const getArchivedTasksSchema = z.object({
@@ -36,6 +44,7 @@ export const getArchivedTasksSchema = z.object({
   limit: z.number().int().min(1).max(1000).optional().describe(
     "Maximum number of tasks to return (defaults to 100)",
   ),
+  format: formatSchema,
 });
 
 // Get task by ID parameters
