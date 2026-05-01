@@ -42,6 +42,10 @@ import {
   updateTaskTextSchema,
   type ReorderTaskInput,
   reorderTaskSchema,
+  type SetDailyPriorityInput,
+  setDailyPrioritySchema,
+  type SetBacklogPriorityInput,
+  setBacklogPrioritySchema,
 } from "../schemas.js";
 import { filterTasksByCompletion } from "../utils/task-filters.js";
 import {
@@ -615,6 +619,89 @@ export const reorderTaskTool = withTransportClient({
   },
 });
 
+const UPDATE_DAILY_PRIORITY_MUTATION = `
+mutation updateDailyPriority($input: UpdateDailyPriorityInput!) {
+  updateDailyPriority(input: $input) {
+    success
+    skipped
+    __typename
+  }
+}
+`;
+
+const UPDATE_BACKLOG_PRIORITY_MUTATION = `
+mutation updateBacklogPriority($input: UpdateBacklogPriorityInput!) {
+  updateBacklogPriority(input: $input) {
+    success
+    skipped
+    __typename
+  }
+}
+`;
+
+export const setDailyPriorityTool = withTransportClient({
+  name: "set-daily-priority",
+  description:
+    "Set the daily priority level for a scheduled task on a specific day. Priority is per-day: urgent=1 (most urgent), priority=2, normal=3 (default), low=4.",
+  parameters: setDailyPrioritySchema,
+  execute: async (
+    { taskId, priority, day, limitResponsePayload }: SetDailyPriorityInput,
+    context: ToolContext,
+  ) => {
+    const response = await (context.client as any).graphqlRequest({
+      operationName: "updateDailyPriority",
+      variables: {
+        input: {
+          taskId,
+          dailyPriority: [{ priority, day }],
+          limitResponsePayload: limitResponsePayload ?? true,
+        },
+      },
+      query: UPDATE_DAILY_PRIORITY_MUTATION,
+    });
+
+    const result = response?.data?.updateDailyPriority;
+    return formatJsonResponse({
+      success: result?.success ?? false,
+      taskId,
+      priority,
+      day,
+      priorityUpdated: true,
+    });
+  },
+});
+
+export const setBacklogPriorityTool = withTransportClient({
+  name: "set-backlog-priority",
+  description:
+    "Set the priority level for a backlog task. Known values: 'medium'. Other likely values: 'high', 'low', 'none'.",
+  parameters: setBacklogPrioritySchema,
+  execute: async (
+    { taskId, backlogPriority, limitResponsePayload }: SetBacklogPriorityInput,
+    context: ToolContext,
+  ) => {
+    const response = await (context.client as any).graphqlRequest({
+      operationName: "updateBacklogPriority",
+      variables: {
+        input: {
+          taskId,
+          backlogPriority,
+          limitResponsePayload: limitResponsePayload ?? true,
+        },
+      },
+      query: UPDATE_BACKLOG_PRIORITY_MUTATION,
+    });
+
+    const result = response?.data?.updateBacklogPriority;
+    return formatJsonResponse({
+      success: result?.success ?? false,
+      taskId,
+      backlogPriority,
+      priorityUpdated: true,
+    });
+  },
+});
+
 // Export all task tools
 export const taskTools = [
   // Query tools
@@ -647,4 +734,8 @@ export const taskTools = [
 
   // Scheduling tools
   reorderTaskTool,
+
+  // Priority tools
+  setDailyPriorityTool,
+  setBacklogPriorityTool,
 ];

@@ -554,6 +554,78 @@ export const updateCalendarEventSchema = z.object({
   ),
 });
 
+// Set daily priority (beta feature)
+export const setDailyPrioritySchema = z.object({
+  taskId: z.string().min(1).describe("The ID of the task to update"),
+  priority: z.enum(["urgent", "priority", "normal", "low"]).describe(
+    "Priority level: urgent=1 (most urgent), priority=2, normal=3 (default), low=4",
+  ),
+  day: z.string().describe("Date the priority applies to, in YYYY-MM-DD format"),
+  limitResponsePayload: z.boolean().optional().describe(
+    "Whether to limit response payload size (defaults to true)",
+  ),
+});
+
+// Set backlog priority
+export const setBacklogPrioritySchema = z.object({
+  taskId: z.string().min(1).describe("The ID of the backlog task to update"),
+  backlogPriority: z.string().describe(
+    "Priority level for the backlog task. Known values: 'medium'. Other likely values: 'high', 'low', 'none'.",
+  ),
+  limitResponsePayload: z.boolean().optional().describe(
+    "Whether to limit response payload size (defaults to true)",
+  ),
+});
+
+// Create objective
+export const createObjectiveSchema = z.object({
+  text: z.string().min(1).describe("The title/text of the objective"),
+  weekStart: z.string().describe(
+    "The start date of the week this objective belongs to, in YYYY-MM-DD format",
+  ),
+  streamId: z.string().optional().describe(
+    "Stream/channel ID to associate with the objective",
+  ),
+  timeEstimate: z.number().int().positive().optional().describe(
+    "Estimated time for the objective in minutes",
+  ),
+});
+
+// Update objective (complete, rename, delete, reassign tasks, etc.)
+export const updateObjectiveSchema = z.object({
+  objectiveId: z.string().min(1).describe("The ID of the objective to update"),
+  text: z.string().optional().describe("New title/text for the objective"),
+  completed: z.boolean().optional().describe(
+    "Mark the objective as complete or incomplete",
+  ),
+  completedAt: z.string().nullable().optional().describe(
+    "Completion timestamp (ISO 8601). Set alongside completed: true. Pass null to clear.",
+  ),
+  deleted: z.boolean().optional().describe(
+    "Set to true to delete the objective",
+  ),
+  timeEstimate: z.number().int().positive().nullable().optional().describe(
+    "Updated time estimate in minutes, or null to clear",
+  ),
+  streamId: z.string().nullable().optional().describe(
+    "Stream/channel ID to associate with the objective, or null to unset",
+  ),
+  taskIds: z.array(z.string()).optional().describe(
+    "Replace the full list of task IDs linked to this objective",
+  ),
+});
+
+// Link/unlink a task to an objective
+export const updateTaskObjectiveIdSchema = z.object({
+  taskId: z.string().min(1).describe("The ID of the task to update"),
+  objectiveId: z.string().nullable().describe(
+    "The ID of the objective to link to the task, or null to unlink",
+  ),
+  limitResponsePayload: z.boolean().optional().describe(
+    "Whether to limit response payload size (defaults to true)",
+  ),
+});
+
 /**
  * API Response Schemas
  */
@@ -628,6 +700,12 @@ export type UpdateTaskUncompleteBulkInput = z.infer<typeof updateTaskUncompleteB
 export type DeleteTaskBulkInput = z.infer<typeof deleteTaskBulkSchema>;
 export type UpdateTaskSnoozeDateBulkInput = z.infer<typeof updateTaskSnoozeDateBulkSchema>;
 export type UpdateTaskBacklogBulkInput = z.infer<typeof updateTaskBacklogBulkSchema>;
+
+export type SetDailyPriorityInput = z.infer<typeof setDailyPrioritySchema>;
+export type SetBacklogPriorityInput = z.infer<typeof setBacklogPrioritySchema>;
+export type CreateObjectiveInput = z.infer<typeof createObjectiveSchema>;
+export type UpdateObjectiveInput = z.infer<typeof updateObjectiveSchema>;
+export type UpdateTaskObjectiveIdInput = z.infer<typeof updateTaskObjectiveIdSchema>;
 
 export type User = z.infer<typeof userSchema>;
 export type Task = z.infer<typeof taskSchema>;

@@ -3,6 +3,7 @@ import { taskTools } from "./task-tools.js";
 import { streamTools } from "./stream-tools.js";
 import { calendarTools } from "./calendar-tools.js";
 import { bulkTaskTools } from "./bulk-task-tools.js";
+import { objectiveTools } from "./objective-tools.js";
 
 export const allTools = [
   ...userTools,
@@ -10,6 +11,7 @@ export const allTools = [
   ...streamTools,
   ...calendarTools,
   ...bulkTaskTools,
+  ...objectiveTools,
 ];
 
 export * from "./user-tools.js";
@@ -17,4 +19,5 @@ export * from "./task-tools.js";
 export * from "./stream-tools.js";
 export * from "./calendar-tools.js";
 export * from "./bulk-task-tools.js";
+export * from "./objective-tools.js";
 export * from "./shared.js";

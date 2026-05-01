@@ -29,6 +29,10 @@ export type TrimmedTask = Pick<Task,
   } | null;
   /** Array of subtask titles only (simplified from full subtask objects) */
   subtasks: string[];
+  /** Per-day priority entries for this task (beta feature). Empty array if none set. */
+  dailyPriority: Array<{ priority: string; day: string }>;
+  /** Backlog priority level for this task, or null if not set. */
+  backlogPriority: string | null;
 };
 
 /**
@@ -108,6 +112,8 @@ export function trimTaskForResponse(task: Task): TrimmedTask {
     subtasks: task.subtasks.map((st) => st.title),
     text: task.text,
     timeEstimate: task.timeEstimate,
+    dailyPriority: (task as any).dailyPriority ?? [],
+    backlogPriority: (task as any).backlogPriority ?? null,
   };
 }
 
@@ -145,6 +151,8 @@ export function trimTaskWithTimingForResponse(task: Task): TrimmedTaskWithTiming
     timeEstimate: task.timeEstimate,
     actualTime: task.actualTime ?? [],
     subtasks,
+    dailyPriority: (task as any).dailyPriority ?? [],
+    backlogPriority: (task as any).backlogPriority ?? null,
   };
 }
 
