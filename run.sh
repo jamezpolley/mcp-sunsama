@@ -1,7 +1,7 @@
 #!/bin/bash
-# Used on Linux/macOS/WSL. On Windows, .mcp.json invokes run.ps1 instead.
+# Credential refs (SUNSAMA_EMAIL, SUNSAMA_PASSWORD) come from env.
+#
+# First-time setup: run `npm install && npm run build` in this directory.
+# Without dist/main.js the launcher errors and the MCP client sees -32000.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-export SUNSAMA_EMAIL="op://Private/Sunsama/email"
-export SUNSAMA_PASSWORD="op://Private/Sunsama/password"
-exec op run --account T26JAJX2KFGJ7PCGFCVGVYHOHA -- node "$SCRIPT_DIR/dist/main.js"
+exec /home/james/git/claude/expert-couscous/op-run-mcp.sh node "$SCRIPT_DIR/dist/main.js"
